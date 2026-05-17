@@ -6,30 +6,33 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Settings,
+  LogOut,
   Plus,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useTags } from "@/features/tags/hooks/use-tags";
-import { useTasks } from "@/features/tasks/hooks/use-tasks";
+import type { Task, Tag } from "@/types";
 
 interface SidebarProps {
   className?: string;
+  tasks: Task[];
+  tags: Tag[];
+  onOpenTagManager?: () => void;
+  onLogout?: () => void;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, tasks, tags, onOpenTagManager, onLogout }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const { tags } = useTags();
-  const { tasks } = useTasks();
 
   const navItems = [
-    { icon: LayoutDashboard, label: "All Tasks", count: tasks.length },
-    { icon: Clock, label: "In Progress", count: tasks.filter((t) => t.status === "IN_PROGRESS").length },
-    { icon: AlertCircle, label: "Urgent", count: tasks.filter((t) => t.priority === "URGENT").length },
-    { icon: CheckCircle2, label: "Completed", count: tasks.filter((t) => t.status === "DONE").length },
+    { icon: LayoutDashboard, label: "Todas as tarefas", count: tasks.length },
+    { icon: Clock, label: "Em andamento", count: tasks.filter((t) => t.status === "IN_PROGRESS").length },
+    { icon: Eye, label: "Em revisão", count: tasks.filter((t) => t.status === "REVIEW").length },
+    { icon: AlertCircle, label: "Urgentes", count: tasks.filter((t) => t.priority === "URGENT").length },
+    { icon: CheckCircle2, label: "Concluídas", count: tasks.filter((t) => t.status === "DONE").length },
   ];
 
   return (
@@ -85,7 +88,7 @@ export function Sidebar({ className }: SidebarProps) {
               <span className="text-xs font-medium text-text-muted uppercase tracking-wider">
                 Tags
               </span>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onOpenTagManager}>
                 <Plus className="h-3 w-3" />
               </Button>
             </div>
@@ -109,12 +112,13 @@ export function Sidebar({ className }: SidebarProps) {
 
       <div className="border-t border-border-default p-2">
         <button
+          onClick={onLogout}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
           )}
         >
-          <Settings className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span>Settings</span>}
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+          {!collapsed && <span>Sair</span>}
         </button>
       </div>
     </aside>

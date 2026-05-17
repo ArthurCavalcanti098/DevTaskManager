@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         description: data.description,
         status: data.status,
         priority: data.priority,
-        order: (maxOrder._max.order ?? -1) + 1,
+        order: (maxOrder._max?.order ?? -1) + 1,
         userId: session.user.id,
         ...(data.tagIds?.length && {
           tags: {

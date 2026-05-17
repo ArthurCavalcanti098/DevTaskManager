@@ -19,7 +19,7 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel = "Confirmar",
   variant = "danger",
   onConfirm,
   isLoading,
@@ -35,14 +35,14 @@ export function ConfirmDialog({
         </DialogHeader>
         <div className="flex justify-end gap-3 mt-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             variant={variant === "danger" ? "danger" : "default"}
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Deleting..." : confirmLabel}
+            {isLoading ? "Excluindo..." : confirmLabel}
           </Button>
         </div>
       </DialogContent>

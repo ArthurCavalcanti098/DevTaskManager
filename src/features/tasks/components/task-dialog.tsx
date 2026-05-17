@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TaskForm } from "./task-form";
 import type { Task, Tag } from "@/types";
 import type { CreateTaskInput } from "@/validators/task";
@@ -27,8 +27,11 @@ export function TaskDialog({
       <DialogContent className="sm:max-w-[500px] bg-bg-secondary border-border-default">
         <DialogHeader>
           <DialogTitle className="text-text-primary">
-            {task ? "Edit Task" : "Create Task"}
+            {task ? "Editar tarefa" : "Nova tarefa"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {task ? "Edite os dados da tarefa" : "Preencha os dados para criar uma nova tarefa"}
+          </DialogDescription>
         </DialogHeader>
         <TaskForm
           task={task}

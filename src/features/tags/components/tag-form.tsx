@@ -45,10 +45,10 @@ export function TagForm({ tag, onSubmit, onCancel, isLoading }: TagFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium text-text-primary">Name</label>
+        <label className="text-sm font-medium text-text-primary">Nome</label>
         <Input
           {...register("name")}
-          placeholder="Tag name"
+          placeholder="Nome da tag"
           className={errors.name ? "border-accent-danger" : ""}
         />
         {errors.name && (
@@ -57,7 +57,7 @@ export function TagForm({ tag, onSubmit, onCancel, isLoading }: TagFormProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-text-primary">Color</label>
+        <label className="text-sm font-medium text-text-primary">Cor</label>
         <div className="flex flex-wrap gap-2">
           {presetColors.map((color) => (
             <button
@@ -80,10 +80,10 @@ export function TagForm({ tag, onSubmit, onCancel, isLoading }: TagFormProps) {
 
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancel
+          Cancelar
         </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? (tag ? "Updating..." : "Creating...") : (tag ? "Update Tag" : "Create Tag")}
+          {isLoading ? (tag ? "Salvando..." : "Criando...") : (tag ? "Salvar" : "Criar tag")}
         </Button>
       </div>
     </form>

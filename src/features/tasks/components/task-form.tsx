@@ -26,16 +26,17 @@ interface TaskFormData {
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "BACKLOG", label: "Backlog" },
-  { value: "TODO", label: "To Do" },
-  { value: "IN_PROGRESS", label: "In Progress" },
-  { value: "DONE", label: "Done" },
+  { value: "TODO", label: "A fazer" },
+  { value: "IN_PROGRESS", label: "Em andamento" },
+  { value: "REVIEW", label: "Revisão" },
+  { value: "DONE", label: "Concluído" },
 ];
 
 const priorityOptions: { value: TaskPriority; label: string }[] = [
-  { value: "LOW", label: "Low" },
-  { value: "MEDIUM", label: "Medium" },
-  { value: "HIGH", label: "High" },
-  { value: "URGENT", label: "Urgent" },
+  { value: "LOW", label: "Baixa" },
+  { value: "MEDIUM", label: "Média" },
+  { value: "HIGH", label: "Alta" },
+  { value: "URGENT", label: "Urgente" },
 ];
 
 export function TaskForm({ task, tags, onSubmit, onCancel, isLoading }: TaskFormProps) {
@@ -84,10 +85,10 @@ export function TaskForm({ task, tags, onSubmit, onCancel, isLoading }: TaskForm
   return (
     <form onSubmit={handleSubmit(onSubmit as never)} className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium text-text-primary">Title</label>
+        <label className="text-sm font-medium text-text-primary">Título</label>
         <Input
           {...register("title")}
-          placeholder="Task title"
+          placeholder="Título da tarefa"
           className={errors.title ? "border-accent-danger" : ""}
         />
         {errors.title && (
@@ -96,10 +97,10 @@ export function TaskForm({ task, tags, onSubmit, onCancel, isLoading }: TaskForm
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-text-primary">Description</label>
+        <label className="text-sm font-medium text-text-primary">Descrição</label>
         <textarea
           {...register("description")}
-          placeholder="Add a description..."
+          placeholder="Adicione uma descrição..."
           rows={3}
           className="flex w-full rounded-md border border-border-default bg-bg-tertiary px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary resize-none"
         />
@@ -108,6 +109,7 @@ export function TaskForm({ task, tags, onSubmit, onCancel, isLoading }: TaskForm
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-text-primary">Status</label>
+
           <select
             {...register("status")}
             className="flex h-10 w-full rounded-md border border-border-default bg-bg-tertiary px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
@@ -121,7 +123,7 @@ export function TaskForm({ task, tags, onSubmit, onCancel, isLoading }: TaskForm
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-text-primary">Priority</label>
+          <label className="text-sm font-medium text-text-primary">Prioridade</label>
           <select
             {...register("priority")}
             className="flex h-10 w-full rounded-md border border-border-default bg-bg-tertiary px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
@@ -163,10 +165,10 @@ export function TaskForm({ task, tags, onSubmit, onCancel, isLoading }: TaskForm
 
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="ghost" onClick={onCancel}>
-          Cancel
+          Cancelar
         </Button>
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Saving..." : task ? "Update Task" : "Create Task"}
+          {isLoading ? "Salvando..." : task ? "Salvar" : "Criar tarefa"}
         </Button>
       </div>
     </form>

@@ -1,42 +1,67 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, ClipboardList } from "lucide-react";
+import { Plus, Search, ClipboardList, Tag as TagIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TaskCard } from "./task-card";
 import { TaskDialog } from "./task-dialog";
+import { TagManagerDialog } from "@/features/tags/components/tag-manager-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ColumnSkeleton } from "@/components/common/skeleton";
-import { useTasks } from "../hooks/use-tasks";
-import { useTags } from "@/features/tags/hooks/use-tags";
-import type { Task, TaskStatus, TaskPriority } from "@/types";
+import type { Task, Tag, TaskStatus, TaskPriority } from "@/types";
 import type { CreateTaskInput } from "@/validators/task";
 
 const statusColumns: { id: TaskStatus; label: string }[] = [
   { id: "BACKLOG", label: "Backlog" },
-  { id: "TODO", label: "To Do" },
-  { id: "IN_PROGRESS", label: "In Progress" },
-  { id: "DONE", label: "Done" },
+  { id: "TODO", label: "A fazer" },
+  { id: "IN_PROGRESS", label: "Em andamento" },
+  { id: "REVIEW", label: "Revisão" },
+  { id: "DONE", label: "Concluído" },
 ];
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "BACKLOG", label: "Backlog" },
-  { value: "TODO", label: "To Do" },
-  { value: "IN_PROGRESS", label: "In Progress" },
-  { value: "DONE", label: "Done" },
+  { value: "TODO", label: "A fazer" },
+  { value: "IN_PROGRESS", label: "Em andamento" },
+  { value: "REVIEW", label: "Revisão" },
+  { value: "DONE", label: "Concluído" },
 ];
 
 const priorityOptions: { value: TaskPriority; label: string }[] = [
-  { value: "LOW", label: "Low" },
-  { value: "MEDIUM", label: "Medium" },
-  { value: "HIGH", label: "High" },
-  { value: "URGENT", label: "Urgent" },
+  { value: "LOW", label: "Baixa" },
+  { value: "MEDIUM", label: "Média" },
+  { value: "HIGH", label: "Alta" },
+  { value: "URGENT", label: "Urgente" },
 ];
 
-export function TaskList() {
-  const { tasks, isLoading, createTask, updateTask, deleteTask } = useTasks();
-  const { tags } = useTags();
+interface TaskListProps {
+  tasks: Task[];
+  isLoadingTasks: boolean;
+  createTask: (data: CreateTaskInput) => Promise<Task>;
+  updateTask: (id: string, data: Record<string, unknown>) => Promise<Task>;
+  deleteTask: (id: string) => Promise<void>;
+  tags: Tag[];
+  createTag: (data: { name: string; color?: string }) => Promise<Tag>;
+  updateTag: (id: string, data: { name?: string; color?: string }) => Promise<Tag>;
+  deleteTag: (id: string) => Promise<void>;
+  tagManagerOpen?: boolean;
+  onTagManagerChange?: (open: boolean) => void;
+}
+
+export function TaskList({
+  tasks,
+  isLoadingTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  tags,
+  createTag,
+  updateTag,
+  deleteTag,
+  tagManagerOpen: tagManagerOpenProp,
+  onTagManagerChange,
+}: TaskListProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "">("");
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "">("");
@@ -45,14 +70,14 @@ export function TaskList() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tagManagerOpenLocal, setTagManagerOpenLocal] = useState(false);
+  const tagManagerOpen = tagManagerOpenProp ?? tagManagerOpenLocal;
+  const setTagManagerOpen = onTagManagerChange ?? setTagManagerOpenLocal;
 
   const filteredTasks = tasks.filter((task) => {
     if (search) {
       const q = search.toLowerCase();
-      const matchesSearch =
-        task.title.toLowerCase().includes(q) ||
-        task.description?.toLowerCase().includes(q);
-      if (!matchesSearch) return false;
+      if (!task.title.toLowerCase().includes(q)) return false;
     }
     if (statusFilter && task.status !== statusFilter) return false;
     if (priorityFilter && task.priority !== priorityFilter) return false;
@@ -97,7 +122,7 @@ export function TaskList() {
     }
   }
 
-  if (isLoading) {
+  if (isLoadingTasks) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -108,7 +133,8 @@ export function TaskList() {
             <div className="h-9 w-24 animate-pulse rounded-md bg-bg-tertiary" />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+          <ColumnSkeleton />
           <ColumnSkeleton />
           <ColumnSkeleton />
           <ColumnSkeleton />
@@ -122,21 +148,25 @@ export function TaskList() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-          <Input
-            placeholder="Search tasks..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
+  <Search
+    aria-hidden="true"
+    className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-text-muted"
+  />
+
+  <Input
+    placeholder="Buscar tarefas..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="!pl-12"
+  />
+</div>
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as TaskStatus | "")}
             className="flex h-9 rounded-md border border-border-default bg-bg-tertiary px-3 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
           >
-            <option value="">All Status</option>
+            <option value="">Todos os status</option>
             {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
@@ -148,7 +178,7 @@ export function TaskList() {
             onChange={(e) => setPriorityFilter(e.target.value as TaskPriority | "")}
             className="flex h-9 rounded-md border border-border-default bg-bg-tertiary px-3 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
           >
-            <option value="">All Priority</option>
+            <option value="">Todas as prioridades</option>
             {priorityOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
@@ -161,7 +191,7 @@ export function TaskList() {
               onChange={(e) => setTagFilter(e.target.value)}
               className="flex h-9 rounded-md border border-border-default bg-bg-tertiary px-3 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
             >
-              <option value="">All Tags</option>
+              <option value="">Todas as tags</option>
               {tags.map((tag) => (
                 <option key={tag.id} value={tag.id}>
                   {tag.name}
@@ -169,9 +199,13 @@ export function TaskList() {
               ))}
             </select>
           )}
+          <Button variant="ghost" size="sm" onClick={() => setTagManagerOpen(true)}>
+            <TagIcon className="h-4 w-4 mr-1" />
+            Tags
+          </Button>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            New Task
+            Nova tarefa
           </Button>
         </div>
       </div>
@@ -179,17 +213,17 @@ export function TaskList() {
       {tasks.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-default py-16">
           <ClipboardList className="h-12 w-12 text-text-muted mb-4" />
-          <h3 className="text-lg font-medium text-text-primary mb-1">No tasks yet</h3>
-          <p className="text-sm text-text-secondary mb-4">Create your first task to get started</p>
+          <h3 className="text-lg font-medium text-text-primary mb-1">Nenhuma tarefa ainda</h3>
+          <p className="text-sm text-text-secondary mb-4">Crie sua primeira tarefa para começar</p>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Create Task
+            Criar tarefa
           </Button>
         </div>
       )}
 
       {tasks.length > 0 && (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         {tasksByStatus.map((column) => (
           <div key={column.id} className="space-y-3">
             <div className="flex items-center justify-between">
@@ -209,7 +243,7 @@ export function TaskList() {
               ))}
               {column.tasks.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border-default p-4 text-center text-xs text-text-muted">
-                  No tasks
+                  Sem tarefas
                 </div>
               )}
             </div>
@@ -243,6 +277,15 @@ export function TaskList() {
         confirmLabel="Delete"
         onConfirm={handleDelete}
         isLoading={isSubmitting}
+      />
+
+      <TagManagerDialog
+        open={tagManagerOpen}
+        onOpenChange={setTagManagerOpen}
+        tags={tags}
+        onCreate={createTag}
+        onUpdate={updateTag}
+        onDelete={deleteTag}
       />
     </div>
   );

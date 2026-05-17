@@ -14,17 +14,17 @@ interface TaskCardProps {
 }
 
 const priorityColors: Record<TaskPriority, string> = {
-  LOW: "bg-accent-info/20 text-accent-info",
-  MEDIUM: "bg-accent-warning/20 text-accent-warning",
-  HIGH: "bg-accent-danger/20 text-accent-danger",
-  URGENT: "bg-red-600/20 text-red-400",
+  LOW: "bg-green-500/20 text-green-400",
+  MEDIUM: "bg-amber-500/20 text-amber-400",
+  HIGH: "bg-red-400/20 text-red-300",
+  URGENT: "bg-red-600/30 text-red-500 font-semibold",
 };
 
 const priorityLabels: Record<TaskPriority, string> = {
-  LOW: "Low",
-  MEDIUM: "Medium",
-  HIGH: "High",
-  URGENT: "Urgent",
+  LOW: "Baixa",
+  MEDIUM: "Média",
+  HIGH: "Alta",
+  URGENT: "Urgente",
 };
 
 export function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TagForm } from "./tag-form";
 import type { Tag } from "@/types";
 import type { CreateTagInput } from "@/validators/tag";
@@ -18,7 +18,10 @@ export function TagDialog({ open, onOpenChange, tag, onSubmit, isLoading }: TagD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] bg-bg-secondary border-border-default">
         <DialogHeader>
-          <DialogTitle className="text-text-primary">{tag ? "Edit Tag" : "Create Tag"}</DialogTitle>
+          <DialogTitle className="text-text-primary">{tag ? "Editar tag" : "Nova tag"}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {tag ? "Edite os dados da tag" : "Preencha os dados para criar uma nova tag"}
+          </DialogDescription>
         </DialogHeader>
         <TagForm
           tag={tag}

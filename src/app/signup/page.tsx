@@ -72,9 +72,9 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-bg-primary">
       <div className="w-full max-w-md space-y-8 rounded-xl border border-border-default bg-bg-secondary p-8">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-text-primary">Create an account</h1>
+          <h1 className="text-2xl font-semibold text-text-primary">Criar conta</h1>
           <p className="mt-2 text-sm text-text-secondary">
-            Get started with DevTasks Manager
+            Comece a usar o DevTasks Manager
           </p>
         </div>
 
@@ -87,13 +87,13 @@ export default function SignupPage() {
 
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium text-text-primary">
-              Name
+              Nome
             </label>
             <Input
               id="name"
               name="name"
               type="text"
-              placeholder="John Doe"
+              placeholder="João Silva"
               required
             />
           </div>
@@ -113,7 +113,7 @@ export default function SignupPage() {
 
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium text-text-primary">
-              Password
+              Senha
             </label>
             <Input
               id="password"
@@ -122,17 +122,18 @@ export default function SignupPage() {
               placeholder="••••••••"
               required
             />
+            <p className="text-xs text-text-muted">Mínimo de 8 caracteres</p>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create account"}
+            {isLoading ? "Criando conta..." : "Criar conta"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-text-secondary">
-          Already have an account?{" "}
+          Já tem uma conta?{" "}
           <Link href="/login" className="text-accent-primary hover:text-accent-primary-hover">
-            Sign in
+            Entrar
           </Link>
         </p>
       </div>

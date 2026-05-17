@@ -33,6 +33,28 @@ export function useTags() {
     load();
   }, []);
 
+  async function updateTag(id: string, data: { name?: string; color?: string }) {
+    const res = await fetch(`/api/tags/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      if (res.status === 409) {
+        toast.error("Tag with this name already exists");
+        throw new Error("Tag already exists");
+      }
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to update tag");
+    }
+
+    const updated = await res.json();
+    setTags((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    toast.success("Tag updated");
+    return updated;
+  }
+
   async function createTag(data: { name: string; color?: string }) {
     const res = await fetch("/api/tags", {
       method: "POST",
@@ -69,5 +91,5 @@ export function useTags() {
     toast.success("Tag deleted");
   }
 
-  return { tags, isLoading, createTag, deleteTag };
+  return { tags, isLoading, createTag, updateTag, deleteTag };
 }
