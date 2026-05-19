@@ -39,6 +39,7 @@ export function HomeContent() {
               createTask={tasksData.createTask}
               updateTask={tasksData.updateTask}
               deleteTask={tasksData.deleteTask}
+              moveTask={tasksData.moveTask}
               tags={tagsData.tags}
               createTag={tagsData.createTag}
               updateTag={tagsData.updateTag}

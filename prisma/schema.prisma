@@ -81,7 +81,7 @@ model Task {
 
   @@index([userId])
   @@index([status])
-  @@index([userId, status])
+  @@index([userId, status, order])
   @@map("tasks")
 }
 
