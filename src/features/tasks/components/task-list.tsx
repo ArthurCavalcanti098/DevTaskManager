@@ -1,11 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragOverEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Plus, Search, ClipboardList, Tag as TagIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { TaskCard } from "./task-card";
 import { TaskDialog } from "./task-dialog";
+import { KanbanColumn } from "./kanban-column";
 import { TagManagerDialog } from "@/features/tags/components/tag-manager-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ColumnSkeleton } from "@/components/common/skeleton";
@@ -41,6 +55,7 @@ interface TaskListProps {
   createTask: (data: CreateTaskInput) => Promise<Task>;
   updateTask: (id: string, data: Record<string, unknown>) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
+  moveTask: (taskId: string, newStatus: TaskStatus, newIndex: number) => Promise<void>;
   tags: Tag[];
   createTag: (data: { name: string; color?: string }) => Promise<Tag>;
   updateTag: (id: string, data: { name?: string; color?: string }) => Promise<Tag>;
@@ -55,6 +70,7 @@ export function TaskList({
   createTask,
   updateTask,
   deleteTask,
+  moveTask,
   tags,
   createTag,
   updateTag,
@@ -71,8 +87,12 @@ export function TaskList({
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tagManagerOpenLocal, setTagManagerOpenLocal] = useState(false);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeStatus, setActiveStatus] = useState<TaskStatus | null>(null);
   const tagManagerOpen = tagManagerOpenProp ?? tagManagerOpenLocal;
   const setTagManagerOpen = onTagManagerChange ?? setTagManagerOpenLocal;
+
+  const hasFilters = Boolean(search || statusFilter || priorityFilter || tagFilter);
 
   const filteredTasks = tasks.filter((task) => {
     if (search) {
@@ -87,8 +107,86 @@ export function TaskList({
 
   const tasksByStatus = statusColumns.map((col) => ({
     ...col,
-    tasks: filteredTasks.filter((t) => t.status === col.id),
+    tasks: filteredTasks
+      .filter((t) => t.status === col.id)
+      .sort((a, b) => a.order - b.order),
   }));
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      const task = tasks.find((t) => t.id === active.id);
+      if (task) {
+        setActiveTask(task);
+        setActiveStatus(task.status);
+      }
+    },
+    [tasks],
+  );
+
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      if (hasFilters) return;
+      const { over } = event;
+      if (!over) return;
+
+      const overId = over.id as string;
+      const overTask = tasks.find((t) => t.id === overId);
+      const overColumn = statusColumns.find((col) => col.id === overId);
+      const newStatus = overTask?.status ?? overColumn?.id;
+
+      if (newStatus) {
+        setActiveStatus(newStatus);
+      }
+    },
+    [tasks, hasFilters],
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const currentStatus = activeStatus;
+      setActiveTask(null);
+      setActiveStatus(null);
+      if (hasFilters) return;
+
+      const { active, over } = event;
+      if (!over) return;
+
+      const activeId = active.id as string;
+      const overId = over.id as string;
+
+      if (activeId === overId) return;
+
+      if (!currentStatus) return;
+
+      const overTask = tasks.find((t) => t.id === overId);
+      const overColumn = statusColumns.find((col) => col.id === overId);
+      const targetStatus = overTask?.status ?? overColumn?.id ?? currentStatus;
+
+      const tasksInTarget = tasks
+        .filter((t) => t.status === targetStatus && t.id !== activeId)
+        .sort((a, b) => a.order - b.order);
+
+      const overIndex = overTask
+        ? tasksInTarget.findIndex((t) => t.id === overId)
+        : tasksInTarget.length;
+
+      moveTask(activeId, targetStatus, Math.max(0, overIndex));
+    },
+    [tasks, hasFilters, activeStatus, moveTask],
+  );
+
+  function handleClearFilters() {
+    setSearch("");
+    setStatusFilter("");
+    setPriorityFilter("");
+    setTagFilter("");
+  }
 
   async function handleCreate(data: CreateTaskInput) {
     setIsSubmitting(true);
@@ -148,18 +246,17 @@ export function TaskList({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-sm">
-  <Search
-    aria-hidden="true"
-    className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-text-muted"
-  />
-
-  <Input
-    placeholder="Buscar tarefas..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="!pl-12"
-  />
-</div>
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-text-muted"
+          />
+          <Input
+            placeholder="Buscar tarefas..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="!pl-12"
+          />
+        </div>
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
@@ -210,6 +307,15 @@ export function TaskList({
         </div>
       </div>
 
+      {hasFilters && (
+        <div className="flex items-center justify-between rounded-md bg-bg-tertiary px-3 py-2 text-xs text-text-muted">
+          <span>Limpe os filtros para reorganizar tarefas.</span>
+          <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-6 text-xs">
+            Limpar filtros
+          </Button>
+        </div>
+      )}
+
       {tasks.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border-default py-16">
           <ClipboardList className="h-12 w-12 text-text-muted mb-4" />
@@ -223,33 +329,36 @@ export function TaskList({
       )}
 
       {tasks.length > 0 && (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-        {tasksByStatus.map((column) => (
-          <div key={column.id} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-text-secondary">{column.label}</h2>
-              <span className="text-xs text-text-muted bg-bg-tertiary px-2 py-1 rounded-full">
-                {column.tasks.length}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {column.tasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onEdit={setEditingTask}
-                  onDelete={setDeletingTask}
-                />
-              ))}
-              {column.tasks.length === 0 && (
-                <div className="rounded-lg border border-dashed border-border-default p-4 text-center text-xs text-text-muted">
-                  Sem tarefas
-                </div>
-              )}
-            </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+            {tasksByStatus.map((column) => (
+              <KanbanColumn
+                key={column.id}
+                id={column.id}
+                label={column.label}
+                tasks={column.tasks}
+                onEdit={setEditingTask}
+                onDelete={setDeletingTask}
+                disabled={hasFilters}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+          <DragOverlay dropAnimation={null}>
+            {activeTask && (
+              <TaskCard
+                task={activeTask}
+                onEdit={() => {}}
+                onDelete={() => {}}
+              />
+            )}
+          </DragOverlay>
+        </DndContext>
       )}
 
       <TaskDialog
